@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor de Pruebas</title>
+    
+    <link href="style.css" rel="stylesheet" type="text/css" />
+
+    <!--Dependencias de Leaflet-->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+    crossorigin=""></script>
+
+    <!--Dependencias de leaflet-wms y coordinates-->
+    <script src="https://unpkg.com/leaflet.wms@0.2.0/dist/leaflet.wms.js"></script>
+    <script src="https://unpkg.com/leaflet.coordinates@0.1.5/dist/Leaflet.Coordinates-0.1.5.src.js"></script>
+
+    <!--Jquery-->
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
+
+    <!--deps leaflet-geotiff-->
+    <script src="https://unpkg.com/geotiff@1.0.0-beta.7/dist/geotiff.bundle.js"></script>
+    <script src="https://unpkg.com/plotty@0.4.4/dist/plotty.min.js"></script>
+    <script src="https://unpkg.com/leaflet-geotiff-2@0.6.0/dist/leaflet-geotiff.js"></script>
+    <script src="https://unpkg.com/leaflet-geotiff-2@0.6.0/dist/leaflet-geotiff-plotty.js"></script>
+    <script src="https://unpkg.com/leaflet-geotiff-2@0.6.0/dist/leaflet-geotiff-vector-arrows.js"></script>
+    <script src="https://unpkg.com/leaflet-geotiff-2@0.6.0/dist/leaflet-geotiff-rgb.js"></script>
+    
+    <!--Otro paquete de geotif-->
+    <script src="https://unpkg.com/georaster"></script>
+    <script src="https://unpkg.com/proj4"></script>
+    <script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
+
+
+  </head>
+  <body>
+    <div id = "map"> </div>
+    <script type = "module" src="./script.js"></script>
+    <div id = "button-wrapper">
+      <input type = "button" id = "btn-enable-tif" value = "Imagen TIF"/>
+    </div>
+  </body>
+</html>
