@@ -128,7 +128,7 @@ const baseLayers = {
   'Provinciales' : provinciaSource,
   'Departamentos' : departamentoSource,
   'Puntos' : puntos,
-  'Macizos' : macizos,
+  'Macizos': macizos,
   'Focos de Calor' : new MySource('https://geoservicios.conae.gov.ar/geoserver/GeoServiciosCONAE/wms', {
     'transparent' : true,
     'identify' : true,
@@ -140,67 +140,196 @@ const baseLayers = {
 var map = new L.map('map',{layers : baseMaps['OSM']}).setView([-34.645306, -58.357787], 4);
 map.createPane('geotif-pane');
 map.getPane('geotif-pane').style.zIndex = 650;
-L.control.layers(baseMaps, baseLayers).addTo(map);
+var layerControl = L.control.layers(baseMaps, baseLayers).addTo(map);
 //popup_layer.addTo(map);
 
-// Get al server para obtener el archivo .tif
-fetch('./geotif')
+var url_areas_quemadas = 'https://www.googleapis.com/drive/v3/files/1muX3jdwiWRhr5l17bbW36y8Mc3FShHBN?alt=media&key=AIzaSyBhSGIwj5fl4ycbAIdpKAu619mKrONbBSg';
+var sentinel = 'https://www.googleapis.com/drive/v3/files/1PDIRNTlOXKxBPyVVOnKIcJSWzprYd4-k?alt=media&key=AIzaSyBhSGIwj5fl4ycbAIdpKAu619mKrONbBSg';
+var url_euca = 'https://www.googleapis.com/drive/v3/files/1T_7bQmLxmDqDt4uAKXuEhkUlYc4SMs6A?alt=media&key=AIzaSyBhSGIwj5fl4ycbAIdpKAu619mKrONbBSg';
+var url_aws_prueba = 
+'https://s3-us-west-2.amazonaws.com/planet-disaster-data/hurricane-harvey/SkySat_Freeport_s03_20170831T162740Z3.tif';
+var url_prueba_landsat = 
+'https://landsat-pds.s3.amazonaws.com/c1/L8/024/030/LC08_L1TP_024030_20180723_20180731_01_T1/LC08_L1TP_024030_20180723_20180731_01_T1_B1.TIF';
+var open_aerial_sample = 
+'https://oin-hotosm.s3.amazonaws.com/59c66c5223c8440011d7b1e4/0/7ad397c0-bba2-4f98-a08a-931ec3a6e943.tif';
+var url_huracanes_prueba = 'https://storage.googleapis.com/pdd-stac/disasters/hurricane-harvey/0831/20170831_172754_101c_3B_AnalyticMS.tif';
+
+var sentinel_concordia_B3 = 'https://www.googleapis.com/drive/v3/files/1juDcZnXFJIifGW45mydcMLTEGRNgCgl0?alt=media&key=AIzaSyCNxw7IdcBM7jmgCqIPPftaOlBP633k0GM'
+var sentinel_concordia_B11 = 'https://www.googleapis.com/drive/v3/files/1PPsbGLwGYQksBFalx4bRiE_a_kHgwvOv?alt=media&key=AIzaSyCNxw7IdcBM7jmgCqIPPftaOlBP633k0GM'
+var sentinel_concordia_B8 = 'https://www.googleapis.com/drive/v3/files/1gCENjOAfDkoCmAJOilK3j5wzTRyU0Nu8?alt=media&key=AIzaSyCNxw7IdcBM7jmgCqIPPftaOlBP633k0GM'
+
+// -- Metodo para levantar imagen TIF liviana, anda perfecto, hay que retocarle los colores creo ---
+fetch(url_areas_quemadas)
   .then(response => response.arrayBuffer())
   .then(arrayBuffer => {
     parseGeoraster(arrayBuffer).then(georaster => {
       console.log("georaster:", georaster);
 
+      const min = georaster.mins[0];
+      const max = georaster.maxs[0];
+      const range = georaster.ranges[0];
+
       var layer = new GeoRasterLayer({
           georaster: georaster,
-          opacity: 0.5,
+          opacity: 1,
+          pixelValuesToColorFn: function(value){
+            var scale = chroma.scale([chroma('white').alpha(0), 'yellow', 'red']);
+            var scaledPixel = (value - min) / range;
+            return scale(scaledPixel).hex();
+          },
           resolution: 256,
           pane : 'geotif-pane'
       });
-      layer.addTo(map);
+      //layer.addTo(map);
+
+      var svg = "<i class='bi bi-tree-fill'></i>";
+      layerControl.addOverlay(layer, '<b>Areas Quemadas</b>'+svg);
       //map.fitBounds(layer.getBounds()); // Para que el mapa vaya a la ubicacion en donde se creo la capa.
+    });
   });
+
+// --- Metodo para levantar las imagenes pesadas > 100Mb. No anda bien, hay que cambiar las opciones
+parseGeoraster(url_aws_prueba).then(georaster => {
+  
+    const resolution = 512;
+    var layer = new GeoRasterLayer({
+      georaster: georaster,
+      attribution: "Planet",
+      //pixelValuesToColorFn: pixelValuesToColorFn,
+      resolution: resolution,
+      pane : 'geotif-pane'
+    });
+    //layerControl.addOverlay(layer, '<b>TIF pesado</b>');
+    layer.addTo(map);
+    layerControl.addOverlay(layer, '<b>SkySat</b>');
+    //map.fitBounds(layer.getBounds());
 });
+
+      const baseURL = "https://landsat-pds.s3.amazonaws.com/c1/L8/024/030/LC08_L1TP_024030_20180723_20180731_01_T1/LC08_L1TP_024030_20180723_20180731_01_T1_B.TIF";
+      const band4URL = baseURL.replace('B.TIF', 'B4.TIF');
+      const band3URL = baseURL.replace('B.TIF', 'B3.TIF');
+      const band2URL = baseURL.replace('B.TIF', 'B2.TIF');
+      const scale = chroma.scale([
+        '#C7BB95',
+        '#FEFEE1',
+        '#6E9F62',
+        '#032816',
+        'black'
+      ]).domain([
+        0,
+        .2,
+        .4,
+        .6,
+        .8
+      ]);
+      Promise.all([
+        parseGeoraster(band4URL),
+        parseGeoraster(band3URL),
+        parseGeoraster(band2URL)
+      ]).then(georasters => {
+        var pixelValuesToColorFn = values => {
+          const [ RED, GREEN, BLUE ] = values;
+          //console.log(values);
+          if(RED !== 0 && GREEN !== 0 && RED !== 0){
+            const r = Math.round(RED / 65536 * 255 * 2.55);
+            const g = Math.round(GREEN / 65536 * 255 * 2.55);
+            const b = Math.round(BLUE / 65536 * 255 * 2.55);
+            const rgba =  `rgba(${r},${g},${b}, 0.75)`;
+            return rgba;
+          } else {
+            return 0;
+          }
+        };
+        var layer = new GeoRasterLayer({
+          georasters,
+          pixelValuesToColorFn,
+          resolution: 128,
+          pane : 'geotif-pane'
+        });
+        layer.addTo(map);
+        layerControl.addOverlay(layer, '<b>Landsat Sample 2</b>');
+        //map.fitBounds(layer.getBounds());
+      });
+
+      
+      
+      const scale2 = chroma.scale([
+        '#C7BB95',
+        '#FEFEE1',
+        '#6E9F62',
+        '#032816',
+        'black'
+      ]).domain([
+        0,
+        .2,
+        .4,
+        .6,
+        .8
+      ]);
+      Promise.all([
+        parseGeoraster(sentinel_concordia_B8),
+        parseGeoraster(sentinel_concordia_B11),
+        parseGeoraster(sentinel_concordia_B3),
+      ]).then(georasters => {
+        var pixelValuesToColorFn = values => {
+          const [ VNIR, GREEN, SWIR ] = values;
+          //console.log(values);
+          if(RED !== 0 && GREEN !== 0 && RED !== 0){
+            const r = Math.round(RED / 65536 * 255 * 2.55);
+            const g = Math.round(GREEN / 65536 * 255 * 2.55);
+            const b = Math.round(BLUE / 65536 * 255 * 2.55);
+            const rgba =  `rgba(${r},${g},${b}, 0.75)`;
+            return rgba;
+          } else {
+            return 0;
+          }
+        };
+        var layer = new GeoRasterLayer({
+          georasters,
+          pixelValuesToColorFn,
+          resolution: 128,
+          pane : 'geotif-pane'
+        });
+        //layer.addTo(map);
+        layerControl.addOverlay(layer, '<b>Sentinel</b>');
+        //map.fitBounds(layer.getBounds());
+      });
 
 /*
-Framework viejo
-const plottyRenderer = L.LeafletGeotiff.plotty({
-  displayMin: 0,
-  displayMax: 15,
-  clampLow: true,
-  clampHigh: true,
+parseGeoraster(sentinel_concordia_B3).then(georaster => {
+    console.log("georaster:", georaster);
+      
+    const { noDataValue } = georaster;
+    var pixelValuesToColorFn = function (values) {
+    if (
+      values.some(function (value) {
+        return value === noDataValue;
+      })
+      ) {
+        return "rgba(0,0,0,0.0)";
+      } else {
+        const [r, g, b] = values;
+        return `rgba(${r},${g},${b},.85 )`;
+      }
+    };
+    const resolution = 64;
+    var layer = new GeoRasterLayer({
+      georaster: georaster,
+      attribution: "Planet",
+      pixelValuesToColorFn: pixelValuesToColorFn,
+      resolution: resolution,
+      pane : 'geotif-pane'
+    });
+    //layer.addTo(map);
+    layerControl.addOverlay(layer, '<b>Sentinel</b>');
+    map.fitBounds(layer.getBounds());
 });
-
-const rast_file = "./images/file.tif";
-const renderer = L.LeafletGeotiff.rgb();
-
-
-const options = {
-  // Optional, band index to use as R-band
-  rBand: 0,
-  // Optional, band index to use as G-band
-  gBand: 1,
-  // Optional, band index to use as B-band
-  bBand: 2,
-  // band index to use as alpha-band
-  // NOTE: this can also be used in combination with transpValue, then referring to a
-  // color band specifying a fixed value to be interpreted as transparent
-  alphaBand: 0,
-  // for all values equal to transpValue in the band alphaBand, the newly created alpha
-  // channel will be set to 0 (transparent), all other pixel values will result in alpha 255 (opaque)
-  transpValue: 0,
-  renderer: renderer
-};
-
-// create layer
-var layer = L.leafletGeotiff(rast_file, options).addTo(map);
-
-
-// Cosas de prueba
+*/
 //var test_marker = new L.marker([-34, -58]).addTo(map);
 //var test_popup = new L.popup();
 
 //test_popup.setContent('<p>Hola</p>');
 //test_marker.bindPopup(test_popup).openPopup();
 
-// https://github.com/GeoTIFF/georaster-layer-for-leaflet/issues/24
-*/
+// Agregar capas de google: https://gitlab.com/IvanSanchez/Leaflet.GridLayer.GoogleMutant
+
