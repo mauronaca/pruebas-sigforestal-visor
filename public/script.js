@@ -252,20 +252,6 @@ parseGeoraster(url_aws_prueba).then(georaster => {
       });
 
       
-      
-      const scale2 = chroma.scale([
-        '#C7BB95',
-        '#FEFEE1',
-        '#6E9F62',
-        '#032816',
-        'black'
-      ]).domain([
-        0,
-        .2,
-        .4,
-        .6,
-        .8
-      ]);
       Promise.all([
         parseGeoraster(sentinel_concordia_B8),
         parseGeoraster(sentinel_concordia_B11),
@@ -274,15 +260,11 @@ parseGeoraster(url_aws_prueba).then(georaster => {
         var pixelValuesToColorFn = values => {
           const [ VNIR, GREEN, SWIR ] = values;
           //console.log(values);
-          if(RED !== 0 && GREEN !== 0 && RED !== 0){
-            const r = Math.round(RED / 65536 * 255 * 2.55);
-            const g = Math.round(GREEN / 65536 * 255 * 2.55);
-            const b = Math.round(BLUE / 65536 * 255 * 2.55);
-            const rgba =  `rgba(${r},${g},${b}, 0.75)`;
-            return rgba;
-          } else {
-            return 0;
-          }
+          const r = Math.round(VNIR / 65536 * 255 * 2.55);
+          const g = Math.round(GREEN / 65536 * 255 * 2.55);
+          const b = Math.round(SWIR / 65536 * 255 * 2.55);
+          const rgba =  `rgba(${r},${g},${b}, 0.75)`;
+          return rgba
         };
         var layer = new GeoRasterLayer({
           georasters,
